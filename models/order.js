@@ -165,6 +165,42 @@ const updateFotoProgress = (orderId, newFotoProgressURL, status, callback) => {
     );
   });
 };
+const updateFoto = (orderId, newFotoProduct, status, callback) => {
+  db.get(`SELECT fotoProdukURL FROM orders WHERE id = ?`, [orderId], (err, row) => {
+    if (err) {
+      return callback(err);
+    }
+    console.log('checkmasuk gak sih ke neweFotoProgressURL',newFotoProduct )
+    db.run(
+      `UPDATE orders SET fotoProdukURL = ? WHERE id = ?`,
+      [newFotoProduct, orderId],
+      function(err) {
+        if (err) {
+          return callback(err);
+        }
+        callback(null, { updatedRows: this.changes });
+      }
+    );
+  });
+};
+const updateVideo = (orderId, videoProgressURL, status, callback) => {
+  db.get(`SELECT videoProgressURL FROM orders WHERE id = ?`, [orderId], (err, row) => {
+    if (err) {
+      return callback(err);
+    }
+    console.log('checkmasuk gak sih ke neweFotoProgressURL',videoProgressURL )
+    db.run(
+      `UPDATE orders SET videoProgressURL = ? WHERE id = ?`,
+      [videoProgressURL, orderId],
+      function(err) {
+        if (err) {
+          return callback(err);
+        }
+        callback(null, { updatedRows: this.changes });
+      }
+    );
+  });
+};
 
 const getFotoProgressHistory = (orderId, callback) => {
   db.all(
@@ -218,6 +254,8 @@ module.exports = {
   updateFotoProgress,
   getFotoProgressHistory,
   getVideoUrl,
-  getOrdersByEmail
+  getOrdersByEmail,
+  updateFoto,
+  updateVideo
 };
 

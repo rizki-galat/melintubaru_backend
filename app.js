@@ -4,7 +4,7 @@ const userRoutes = require('./routes/userRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const path = require('path');
 const app = express();
-const port = process.env.PORT ||5500;
+const port = process.env.PORT || 5500;
 
 app.use(bodyParser.json());
 

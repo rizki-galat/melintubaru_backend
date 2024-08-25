@@ -17,7 +17,9 @@ const {
   updateFotoProgress,
   getFotoProgressHistory,
   getVideoUrl,
-  getOrdersByEmail
+  getOrdersByEmail,
+  updateFoto,
+  updateVideo
   
 } = require('../models/order');
 
@@ -112,6 +114,28 @@ router.put('/orders/:id/progress', (req, res) => {
   });
 });
 
+router.put('/orders/:id/fotoproduct', (req, res) => {
+  const { id } = req.params;
+  const { foto,video } = req.body;
+  console.log(foto,video)
+  updateFoto(id,foto, (err, result) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.status(200).json(result);
+  });
+});
+router.put('/orders/:id/videoproduct', (req, res) => {
+  const { id } = req.params;
+  const { foto,video } = req.body;
+  console.log(foto,video)
+  updateVideo(id,video, (err, result) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.status(200).json(result);
+  });
+});
 
 
 router.get('/orders/:id/progress', (req, res) => {
