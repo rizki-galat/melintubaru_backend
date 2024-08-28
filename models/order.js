@@ -83,29 +83,51 @@ const updateOrder = (order, callback) => {
   const { id, customerName, totalPrice, orderDate, status, fotoProdukURL, fotoProgressURL, productName, quantity, price, videoProgressURL, items } = order;
   const orderDateIso = orderDate ? new Date(orderDate).toISOString() : '';
 
-  db.run(
-    `UPDATE orders SET customerName = ?, totalPrice = ?, orderDate = ?, status = ?, fotoProdukURL = ?, fotoProgressURL = ?, productName = ?, quantity = ?, price = ?, videoProgressURL = ? WHERE id = ?`,
-    [customerName, totalPrice, orderDateIso, status, fotoProdukURL, fotoProgressURL, productName, quantity, price, videoProgressURL, id],
-    function(err) {
-      if (err) {
-        return callback(err);
-      }
-      
-      const itemDeletions = deleteOrderItemsByOrderId(id);
-      itemDeletions
-        .then(() => {
-          const itemInsertions = items.map(item => createOrderItem({ ...item, orderId: id }));
-          return Promise.all(itemInsertions);
-        })
-        .then(results => {
-          callback(null, { updatedRows: this.changes });
-        })
-        .catch(err => {
-          callback(err);
-        });
+  db.get(`SELECT * FROM orders WHERE id = ?`, [id], (err, row) => {
+    if (err) {
+      return callback(err);
     }
-  );
+
+    // Tetapkan nilai default jika field fotoProdukURL dan videoProgressURL tidak valid atau tidak berubah
+    const updateFoto = (fotoProdukURL !== null && fotoProdukURL !== undefined && fotoProdukURL !== '' && fotoProdukURL !== row.fotoProdukURL) ? fotoProdukURL : row.fotoProdukURL;
+    const updateVideo = (videoProgressURL !== null && videoProgressURL !== undefined && videoProgressURL !== '' && videoProgressURL !== row.videoProgressURL) ? videoProgressURL : row.videoProgressURL;
+
+    db.run(
+      `UPDATE orders 
+       SET customerName = ?, 
+           totalPrice = ?, 
+           orderDate = ?, 
+           status = ?, 
+           fotoProdukURL = ?, 
+           fotoProgressURL = ?, 
+           productName = ?, 
+           quantity = ?, 
+           price = ?, 
+           videoProgressURL = ? 
+       WHERE id = ?`,
+      [customerName, totalPrice, orderDateIso, status, updateFoto, fotoProgressURL, productName, quantity, price, updateVideo, id],
+      function(err) {
+        if (err) {
+          return callback(err);
+        }
+
+        // Hapus dan masukkan kembali items terkait
+        deleteOrderItemsByOrderId(id)
+          .then(() => {
+            const itemInsertions = items.map(item => createOrderItem({ ...item, orderId: id }));
+            return Promise.all(itemInsertions);
+          })
+          .then(results => {
+            callback(null, { updatedRows: this.changes });
+          })
+          .catch(err => {
+            callback(err);
+          });
+      }
+    );
+  });
 };
+
 
 const deleteOrderItemsByOrderId = (orderId) => {
   return new Promise((resolve, reject) => {
