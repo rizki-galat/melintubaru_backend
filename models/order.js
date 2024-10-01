@@ -4,6 +4,8 @@ const createOrder = (order, callback) => {
   const { customerName, totalPrice, orderDate, status, fotoProdukURL, fotoProgressURL, productName, quantity, price, videoProgressURL, items } = order;
   const orderDateIso = new Date(orderDate).toISOString();
 
+  console.log('Order Date:', orderDate);
+
   db.run(
     `INSERT INTO orders (customerName, totalPrice, orderDate, status, fotoProdukURL, fotoProgressURL, productName, quantity, price, videoProgressURL) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [customerName, totalPrice, orderDateIso, status, fotoProdukURL, fotoProgressURL, productName, quantity, price, videoProgressURL],
@@ -82,7 +84,7 @@ const deleteOrder = (id, callback) => {
 const updateOrder = (order, callback) => {
   const { id, customerName, totalPrice, orderDate, status, fotoProdukURL, fotoProgressURL, productName, quantity, price, videoProgressURL, items } = order;
   const orderDateIso = orderDate ? new Date(orderDate).toISOString() : '';
-
+  
   db.get(`SELECT * FROM orders WHERE id = ?`, [id], (err, row) => {
     if (err) {
       return callback(err);
@@ -166,6 +168,8 @@ const updateFotoProgress = (orderId, newFotoProgressURL, status, callback) => {
     const oldFotoProgressURL = row ? row.fotoProgressURL : '';
     const updateDate = new Date()
     console.log('checkmasuk gak sih ke neweFotoProgressURL',newFotoProgressURL )
+    console.log('cek tanggal yang masuk',updateDate)
+
     db.run(
       `UPDATE orders SET fotoProgressURL = ?, status = ? WHERE id = ?`,
       [newFotoProgressURL, status, orderId],
@@ -173,6 +177,15 @@ const updateFotoProgress = (orderId, newFotoProgressURL, status, callback) => {
         if (err) {
           return callback(err);
         }
+        // Log the details being inserted into order_progress_history
+        console.log('Inserting into order_progress_history:', {
+          orderId,
+          oldFotoProgressURL,
+          newFotoProgressURL,
+          status,
+          updateDate
+        });
+         
         db.run(
           `INSERT INTO order_progress_history (orderId, oldFotoProgressURL, newFotoProgressURL, status, updateDate) VALUES (?, ?, ?, ?, ?)`,
           [orderId, oldFotoProgressURL, newFotoProgressURL, status, updateDate],
@@ -187,12 +200,13 @@ const updateFotoProgress = (orderId, newFotoProgressURL, status, callback) => {
     );
   });
 };
+
 const updateFoto = (orderId, newFotoProduct, status, callback) => {
   db.get(`SELECT fotoProdukURL FROM orders WHERE id = ?`, [orderId], (err, row) => {
     if (err) {
       return callback(err);
     }
-    console.log('checkmasuk gak sih ke neweFotoProgressURL',newFotoProduct )
+    console.log('checkmasuk gak sih ke neweFotoProdukURL',newFotoProduct )
     db.run(
       `UPDATE orders SET fotoProdukURL = ? WHERE id = ?`,
       [newFotoProduct, orderId],
@@ -210,7 +224,7 @@ const updateVideo = (orderId, videoProgressURL, status, callback) => {
     if (err) {
       return callback(err);
     }
-    console.log('checkmasuk gak sih ke neweFotoProgressURL',videoProgressURL )
+    console.log('checkmasuk gak sih ke videoProgressURL',videoProgressURL )
     db.run(
       `UPDATE orders SET videoProgressURL = ? WHERE id = ?`,
       [videoProgressURL, orderId],
@@ -232,6 +246,12 @@ const getFotoProgressHistory = (orderId, callback) => {
       if (err) {
         return callback(err);
       }
+      
+      // Log updateDate untuk setiap catatan
+      rows.forEach(row => {
+        console.log('Update Date for orderId', orderId, ':', row.updateDate);
+      });
+
       callback(null, rows);
     }
   );
